@@ -191,7 +191,7 @@
            (make-logging-interceptor log :c)
            (fn [_]
              (swap! log conj [:handler])
-             (p/resolved error))]
+             (p/rejected error))]
           (sc/execute request))
       =throws=> error)
     (fact
@@ -217,7 +217,7 @@
            (make-logging-interceptor log :c)
            (fn [_]
              (swap! log conj [:handler])
-             (p/resolved error))]
+             (p/rejected error))]
           (sc/execute request))
       => :fixed-by-b)
     (fact

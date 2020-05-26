@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [testit.core :refer :all]
             [sieppari.core :as sc]
+            [sieppari.async.core-async]
             [clojure.core.async :refer [go <! <!!]]))
 
 (defn make-logging-interceptor [log name]

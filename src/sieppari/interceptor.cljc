@@ -1,6 +1,7 @@
 (ns sieppari.interceptor
   (:require [sieppari.async :as a]
-            [sieppari.util :refer [exception?]]))
+            [sieppari.util :refer [exception?]]
+            [clojure.core :as c]))
 
 (defrecord Interceptor [name enter leave error])
 
@@ -9,7 +10,9 @@
 
 (defn- set-result [ctx response]
   (if (and (some? response) (a/async? response))
-    (a/continue response (partial set-result ctx))
+    (a/continue response ctx (fn [resp] (if (and (map? resp) (:error resp))
+                                         resp
+                                         (assoc ctx :response resp))))
     (assoc ctx
       (if (exception? response) :error :response)
       response)))

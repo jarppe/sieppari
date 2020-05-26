@@ -166,7 +166,7 @@
            (make-logging-interceptor log :c)
            (fn [_]
              (swap! log conj [:handler])
-             (js/Promise.resolve error))]
+             (js/Promise.reject error))]
           (sc/execute request
                       fail!
                       (fn [response]
@@ -220,7 +220,7 @@
              (make-logging-interceptor log :c)
              (fn [_]
                (swap! log conj [:handler])
-               (js/Promise.resolve error))]
+               (js/Promise.reject error))]
             (sc/execute request
                         (fn [response]
                           (is (= @log

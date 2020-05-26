@@ -17,10 +17,7 @@
 (defn- -try [ctx f]
   (if f
     (try
-      (let [ctx* (f ctx)]
-        (if (a/async? ctx*)
-          (a/catch ctx* (fn [e] (assoc ctx :error e)))
-          ctx*))
+      (f ctx)
       (catch #?(:clj Exception :cljs :default) e
         (assoc ctx :error e)))
     ctx))
@@ -35,32 +32,37 @@
       (str "Unsupported Context on " stage" - " ctx)
       {:ctx ctx})))
 
-(defn- leave [ctx]
-  (cond
-    (a/async? ctx) (a/continue ctx leave)
-    (c/context? ctx) (let [^Iterator it (:stack ctx)]
-                       (if (.hasNext it)
-                         (let [stage (if (:error ctx) :error :leave)
-                               f (-> it .next stage)]
-                           (recur (-try ctx f)))
-                         ctx))
-    :else (-invalid-context-type! ctx :leave)))
+(defn- leave
+  ([ctx] (leave nil ctx))
+  ([old-ctx ctx]
+   (cond
+     (a/async? ctx) (a/continue ctx old-ctx leave)
+     (c/context? ctx) (let [^Iterator it (:stack ctx)]
+                        (if (.hasNext it)
+                          (let [stage (if (:error ctx) :error :leave)
+                                f     (-> it .next stage)]
+                            (recur ctx (-try ctx f)))
+                          ctx))
+     :else (-invalid-context-type! ctx :leave))))
 
-(defn- enter [ctx]
-  (cond
-    (a/async? ctx) (a/continue ctx enter)
-    (c/context? ctx) (let [queue (:queue ctx)
-                           stack (:stack ctx)
-                           interceptor (peek queue)]
-                       (if (or (not interceptor) (:error ctx))
-                         (assoc ctx :stack (-iter stack))
-                         (recur (-> ctx
-                                    (assoc :queue (pop queue))
-                                    (assoc :stack #?(:clj  (conj stack interceptor)
-                                                     :cljs (doto (or stack (array))
-                                                             (.unshift interceptor))))
-                                    (-try (:enter interceptor))))))
-    :else (-invalid-context-type! ctx :enter)))
+(defn- enter
+  ([ctx] (enter nil ctx))
+  ([old-ctx ctx]
+   (cond
+     (a/async? ctx) (a/continue ctx old-ctx enter)
+     (c/context? ctx) (let [queue       (:queue ctx)
+                            stack       (:stack ctx)
+                            interceptor (peek queue)]
+                        (if (or (not interceptor) (:error ctx))
+                          (assoc ctx :stack (-iter stack))
+                          (let [next-ctx (-> ctx
+                                             (assoc :queue (pop queue))
+                                             (assoc :stack #?(:clj  (conj stack interceptor)
+                                                              :cljs (doto (or stack (array))
+                                                                      (.unshift interceptor)))))]
+                            (recur next-ctx
+                                   (-try next-ctx (:enter interceptor))))))
+     :else (-invalid-context-type! ctx :enter))))
 
 #?(:clj
    (defn- await-result [ctx get-result]
@@ -72,7 +74,7 @@
 
 (defn- deliver-result [ctx get-result on-complete on-error]
   (if (a/async? ctx)
-    (a/continue ctx #(deliver-result % get-result on-complete on-error))
+    (a/continue ctx nil #(deliver-result % get-result on-complete on-error))
     (let [error (:error ctx)
           result (or error (get-result ctx))
           callback (if error on-error on-complete)]

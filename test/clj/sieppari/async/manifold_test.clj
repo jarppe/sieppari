@@ -14,7 +14,7 @@
         d (d/deferred)]
     (future
       (d/success! d "foo"))
-    (as/continue d (partial deliver p))
+    (as/continue d nil (partial deliver p))
     (fact
       @p =eventually=> "foo")))
 
@@ -23,7 +23,8 @@
         d (d/deferred)]
     (future
       (d/success! d "foo"))
-    (as/catch (as/continue d (partial deliver p))
+    (as/continue (as/continue d nil (partial deliver p))
+                 nil
               (fn [_] (deliver p "barf")))
     (fact
       @p =eventually=> "foo"))
@@ -32,7 +33,7 @@
         d (d/deferred)]
     (future
       (d/error! d (Exception. "fubar")))
-    (as/catch d (fn [_] (deliver p "foo")))
+    (as/continue d nil (fn [_] (deliver p "foo")))
     (fact
       @p =eventually=> "foo")))
 

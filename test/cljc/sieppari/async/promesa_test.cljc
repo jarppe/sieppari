@@ -13,7 +13,7 @@
            p (p/create
                (fn [resolve _]
                  (px/schedule! 10 #(resolve "foo"))))]
-       (as/continue p respond)
+       (as/continue p nil respond)
        (is (= @respond "foo"))))
    :cljs
    (deftest core-async-continue-cljs-callback-test
@@ -21,7 +21,7 @@
                (fn [resolve _]
                  (px/schedule! 10 #(resolve "foo"))))]
        (async done
-         (is (as/continue p (fn [response]
+         (is (as/continue p nil (fn [response]
                               (is (= "foo" response))
                               (done))))))))
 
@@ -31,17 +31,19 @@
            p (p/create
                (fn [_ reject]
                  (px/schedule! 10 #(reject (Exception. "fubar")))))]
-       (as/catch p (fn [_] (respond "foo")))
+       (as/continue p nil (fn [_] (respond "foo")))
        (is (= @respond "foo"))))
    :cljs
    (deftest core-async-catch-cljs-callback-test
-     (let [p (p/create
+     (let [err (js/Error. "fubar")
+           p (p/create
                (fn [_ reject]
-                 (px/schedule! 10 #(reject (js/Error. "fubar")))))]
+                 (px/schedule! 10 #(reject err))))]
        (async done
-         (is (as/continue (as/catch p (fn [_] "foo"))
+         (is (as/continue p
+                          nil
                           (fn [response]
-                            (is (= "foo" response))
+                            (is (= {:error err} response))
                             (done))))))))
 
 #?(:clj

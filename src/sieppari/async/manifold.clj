@@ -13,4 +13,17 @@
   (async? [_] true)
   (continue [d f] (d/chain'- nil d f))
   (catch [d f] (d/catch' d f))
-  (await [d] (deref d)))
+  (await [d] (deref d))
+
+  manifold.deferred.SuccessDeferred
+  (async? [_] true)
+  (continue [d f] (d/chain'- nil d f))
+  (catch [d f] (d/catch' d f))
+  (await [d] (deref d))
+
+  manifold.deferred.LeakAwareDeferred
+  (async? [_] true)
+  (continue [d f] (d/chain'- nil d f))
+  (catch [d f] (d/catch' d f))
+  (await [d] (deref d))
+  )

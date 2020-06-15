@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [testit.core :refer :all]
             [sieppari.core :as sc]
+            [sieppari.async.manifold]
             [manifold.deferred :as d]))
 
 (defn make-logging-interceptor [log name]

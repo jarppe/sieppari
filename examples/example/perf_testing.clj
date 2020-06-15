@@ -3,6 +3,7 @@
             [sieppari.core :as s]
             [sieppari.queue :as sq]
             [sieppari.async.core-async]
+            [sieppari.async.manifold]
             [io.pedestal.interceptor :as pi]
             [io.pedestal.interceptor.chain :as pc]
             [manifold.deferred :as d]

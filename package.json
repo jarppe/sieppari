@@ -2,7 +2,7 @@
   "name": "sieppari",
   "description": "Small, fast, and complete interceptor library.",
   "devDependencies": {
-    "ws": "^7.1.2"
+    "ws": "^7.4.6"
   },
   "repository": {
     "type": "git",
